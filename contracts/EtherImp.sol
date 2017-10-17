@@ -15,6 +15,8 @@ contract EtherImp {
     );
 
     function EtherImp() payable public {
+        require(msg.value > 0);
+
         creator = msg.sender;
         currentOwner = creator;
         previousOwner = creator;
@@ -28,6 +30,7 @@ contract EtherImp {
         require(msg.value < lastPricePaid);
         
         // Effects
+        previousOwner = currentOwner;
         currentOwner = msg.sender;
         lastPricePaid = msg.value;
         LogTransfer(previousOwner, currentOwner, lastPricePaid);
