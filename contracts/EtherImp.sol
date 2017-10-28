@@ -8,6 +8,9 @@ contract EtherImp {
     address public previousOwner;
     uint public lastPricePaid;
 
+    // Withdrawl pattern
+    mapping (address => uint) pendingWithdrawals;
+
     event LogTransfer(
         address _from,
         address _to,
@@ -23,6 +26,9 @@ contract EtherImp {
         lastPricePaid = msg.value;
     }
     
+    // TODO: Kind of sketchy, but the difference
+    // between the last price and the new price
+    // goes to the owner of the contract. Fix
     function buyBottle() payable public {
         // Conditions
         require(msg.sender != currentOwner);
@@ -35,21 +41,25 @@ contract EtherImp {
         lastPricePaid = msg.value;
         LogTransfer(previousOwner, currentOwner, lastPricePaid);
         
-        // Interactions
-        previousOwner.transfer(msg.value);
+        pendingWithdrawals[previousOwner] += msg.value;
     }
 
+    function withdraw() {
+        uint amount = pendingWithdrawals[msg.sender];
+
+        // Need to zero to avoid re-entrancy attacks
+        pendingWithdrawals[msg.sender] = 0;
+        msg.sender.transfer(amount);
+    }
+
+    // TODO: Remove this/figure out what do do with
+    // leftover funds.
     function close() onlyCreator {
         selfdestruct(creator);
     }
 
     modifier onlyCreator {
         require(msg.sender == creator);
-        _;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == currentOwner);
         _;
     }
 }
